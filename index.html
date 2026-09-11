@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ 민서 절대 자지 마! (Sleep Ban Center) ⚡</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #ffffff;
+            --accent-color: #ff4757;
+            --warning-color: #ffa500;
+            --success-color: #2ed573;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.1s;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+            margin: 5px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            background-color: #ff6b81;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .alert-mode {
+            animation: flash 0.2s infinite;
+        }
+
+        @keyframes flash {
+            0% { background-color: #ff0000; }
+            50% { background-color: #000000; }
+            100% { background-color: #ff0000; }
+        }
+
+        .timer-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--warning-color);
+            font-family: monospace;
+        }
+
+        input[type="number"], input[type="text"] {
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 5px;
+            border: 1px solid #555;
+            background: #444;
+            color: #fff;
+            width: 60%;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .quote {
+            font-style: italic;
+            color: #aaa;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🚨 민서 전용 잠 깨기 시스템 🚨</h1>
+        <p>민서야, 지금 자면 꿈을 꾸지만, 안 자면 꿈을 이룬다!</p>
+
+        <!-- 1. 졸음 방지 긴급 버튼 -->
+        <div class="card">
+            <h2>📢 미친 듯이 졸릴 때 누르는 버튼</h2>
+            <p>소리와 함께 화면이 번쩍거립니다!</p>
+            <button onclick="triggerEmergency()">🚨 사이렌 작동 (잠 깨기!)</button>
+            <button onclick="stopEmergency()" style="background-color: #70a1ff;">🛑 사이렌 끄기</button>
+        </div>
+
+        <!-- 2. 돌발 반응속도 테스트 (생존 확인) -->
+        <div class="card">
+            <h2>⏱️ 민서 살아있니? (돌발 버튼)</h2>
+            <p>버튼이 뜨면 제한시간 5초 안에 클릭하세요!</p>
+            <div id="quick-click-area">
+                <button id="click-btn" onclick="responseSuccess()" style="display: none; background-color: var(--success-color);">
+                    ⚡ 지금 눌러!!! ⚡
+                </button>
+            </div>
+            <p id="click-status">잠시 후 기습 테스트가 시작됩니다...</p>
+        </div>
+
+        <!-- 3. 뇌 자극 번개 암산 -->
+        <div class="card">
+            <h2>🧠 잠 깨는 번개 암산</h2>
+            <p id="math-problem">문제를 생성 중...</p>
+            <input type="number" id="math-answer" placeholder="정답 입력">
+            <br>
+            <button onclick="checkMathAnswer()" style="background-color: var(--warning-color); color: black;">정답 제출</button>
+            <p id="math-result"></p>
+        </div>
+
+        <!-- 4. 25분 집중 + 스트레칭 타이머 -->
+        <div class="card">
+            <h2>⏳ 25분 집중 타이머 (뽀모도로)</h2>
+            <div class="timer-display" id="timer">25:00</div>
+            <br>
+            <button onclick="startTimer()" style="background-color: var(--success-color);">시작</button>
+            <button onclick="resetTimer()" style="background-color: #57606f;">리셋</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Web Audio API를 이용한 사이렌 소리 생성 ---
+        let audioCtx;
+        let oscillator;
+        let isAlerting = false;
+
+        function startSiren() {
+            if (isAlerting) return;
+            isAlerting = true;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
+            
+            // 사이렌처럼 주파수 오르내리기
+            let high = false;
+            setInterval(() => {
+                if (isAlerting && audioCtx) {
+                    oscillator.frequency.setValueAtTime(high ? 880 : 440, audioCtx.currentTime);
+                    high = !high;
+                }
+            }, 300);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+        }
+
+        function stopSiren() {
+            if (oscillator) {
+                oscillator.stop();
+                oscillator.disconnect();
+            }
+            if (audioCtx) {
+                audioCtx.close();
+            }
+            isAlerting = false;
+        }
+
+        // --- 1. 긴급 비상 버튼 기능 ---
+        function triggerEmergency() {
+            document.body.classList.add('alert-mode');
+            startSiren();
+            alert("민서야!!! 차렷!!! 눈 떠!!!");
+        }
+
+        function stopEmergency() {
+            document.body.classList.remove('alert-mode');
+            stopSiren();
+        }
+
+        // --- 2. 기습 반응속도 테스트 ---
+        let responseTimer;
+        function scheduleQuickClick() {
+            const randomTime = Math.floor(Math.random() * 10000) + 5000; // 5초~15초 사이
+            setTimeout(() => {
+                const btn = document.getElementById('click-btn');
+                const status = document.getElementById('click-status');
+                btn.style.display = 'inline-block';
+                status.innerText = '⚡⚡ 빨리 누르세요!! (제한시간 5초) ⚡⚡';
+                status.style.color = 'red';
+
+                responseTimer = setTimeout(() => {
+                    if (btn.style.display !== 'none') {
+                        triggerEmergency();
+                        status.innerText = '❌ 민서 졸았구나! 경고 사이렌 발동!';
+                        btn.style.display = 'none';
+                        setTimeout(scheduleQuickClick, 10000);
+                    }
+                }, 5000);
+            }, randomTime);
+        }
+
+        function responseSuccess() {
+            clearTimeout(responseTimer);
+            document.getElementById('click-btn').style.display = 'none';
+            const status = document.getElementById('click-status');
+            status.innerText = '✅ 생존 확인! 훌륭합니다 민서님.';
+            status.style.color = 'var(--success-color)';
+            scheduleQuickClick();
+        }
+
+        // --- 3. 잠 깨는 암산 기능 ---
+        let num1, num2, correctAnswer;
+        function generateMathProblem() {
+            num1 = Math.floor(Math.random() * 89) + 11; // 두자리 수
+            num2 = Math.floor(Math.random() * 89) + 11;
+            correctAnswer = num1 * num2; // 두자리수 곱셈으로 뇌 자극
+            document.getElementById('math-problem').innerText = `${num1} × ${num2} = ?`;
+        }
+
+        function checkMathAnswer() {
+            const userAns = parseInt(document.getElementById('math-answer').value);
+            const resultElem = document.getElementById('math-result');
+            if (userAns === correctAnswer) {
+                resultElem.innerText = '⭕ 정답! 뇌가 깨어났습니다.';
+                resultElem.style.color = 'var(--success-color)';
+                document.getElementById('math-answer').value = '';
+                generateMathProblem();
+            } else {
+                resultElem.innerText = '❌ 틀렸습니다! 다시 계산하세요!';
+                resultElem.style.color = 'var(--accent-color)';
+            }
+        }
+
+        // --- 4. 타이머 기능 ---
+        let timeLeft = 25 * 60;
+        let timerInterval;
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').innerText = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            if (timerInterval) return;
+            timerInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    triggerEmergency();
+                    alert("25분 끝! 민서야 일어나서 기지개 켜자!");
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timeLeft = 25 * 60;
+            updateTimerDisplay();
+        }
+
+        // 페이지 로드 시 초기화
+        window.onload = () => {
+            generateMathProblem();
+            scheduleQuickClick();
+        };
+    </script>
+</body>
+</html>
