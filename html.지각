@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지각하지 않기 프로젝트</title>
+    <style>
+        /* 기본 스타일 초기화 및 깔끔하고 심플한 디자인 적용 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 480px;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            text-align: center;
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        .section {
+            background: #fafafa;
+            border: 1px solid #eaeaea;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        input[type="time"], input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input[type="time"]:focus, input[type="text"]:focus, select:focus {
+            border-color: #4A90E2;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #357ABD;
+        }
+
+        /* 알람 울릴 때 시각적 효과 */
+        .alarm-active {
+            animation: pulse 1s infinite alternate;
+            background-color: #ffebee !important;
+            border-color: #ff5252 !important;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.02); }
+        }
+
+        .bus-info-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bus-number {
+            font-weight: bold;
+            color: #4A90E2;
+        }
+
+        .bus-time {
+            font-weight: bold;
+            color: #e53935;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>⏰ 지각하지 않기</h1>
+        <p class="subtitle">오늘 아침은 여유있게, 정시 도착 프로젝트!</p>
+
+        <!-- STEP 1: 기상 알람 설정 -->
+        <div class="section" id="alarmSection">
+            <div class="section-title">1. 기상 시간 설정하기</div>
+            <div class="input-group">
+                <label for="alarmTime">일어날 시간을 선택하세요</label>
+                <input type="time" id="alarmTime">
+            </div>
+            <button id="setAlarmBtn" onclick="setAlarm()">알람 및 일정 등록</button>
+            <p id="alarmStatus" style="font-size: 13px; color: #4A90E2; margin-top: 10px; text-align: center;"></p>
+        </div>
+
+        <!-- STEP 2: 버스 경로 설정 (기본은 숨김, 알람 설정 시 등장) -->
+        <div class="section hidden" id="busSection">
+            <div class="section-title">2. 이동 경로 & 버스 선택</div>
+            <div class="input-group">
+                <label for="startLocation">출발지 (집 근처 정류장)</label>
+                <input type="text" id="startLocation" placeholder="예: 강남역 2번 출구">
+            </div>
+            <div class="input-group">
+                <label for="endLocation">목적지 (학교 근처 정류장)</label>
+                <input type="text" id="endLocation" placeholder="예: 한국고등학교 앞">
+            </div>
+            <div class="input-group">
+                <label for="busSelect">탑승할 버스 번호</label>
+                <select id="busSelect">
+                    <option value="">-- 버스 선택 --</option>
+                    <option value="1004번 (간선)">1004번 (간선버스)</option>
+                    <option value="5001번 (직행)">5001번 (직행버스)</option>
+                    <option value="마을02번">마을02번 (마을버스)</option>
+                </select>
+            </div>
+            <button onclick="saveBusRoute()">경로 저장하기</button>
+        </div>
+
+        <!-- STEP 3: 실시간 버스 도착 정보 (기상 후 확인용) -->
+        <div class="section hidden" id="liveInfoSection">
+            <div class="section-title">🚌 실시간 버스 도착 정보</div>
+            <p style="font-size: 13px; color: #666; margin-bottom: 10px;" id="routeSummary"></p>
+            
+            <div class="bus-info-card">
+                <div>
+                    <div><span class="bus-number" id="displayBusName">1004번</span></div>
+                    <div style="font-size: 12px; color: #888;" id="displayRoute">출발지 ➔ 목적지</div>
+                </div>
+                <div class="bus-time" id="arrivalTime">3분 후 도착</div>
+            </div>
+
+            <button style="margin-top: 12px; background-color: #666;" onclick="stopAlarm()">알람 끄기 & 확인 완료</button>
+        </div>
+    </div>
+
+    <script>
+        let alarmTimer = null;
+        let busUpdateTimer = null;
+
+        // 웹 오디오 API를 이용한 심플한 알람 음원 생성
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let oscillator = null;
+
+        function playSound() {
+            oscillator = audioCtx.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // A4 음
+            oscillator.connect(audioCtx.destination);
+            oscillator.start();
+        }
+
+        function stopSound() {
+            if (oscillator) {
+                oscillator.stop();
+                oscillator = null;
+            }
+        }
+
+        // 1. 알람 설정 함수
+        function setAlarm() {
+            const timeVal = document.getElementById('alarmTime').value;
+            if (!timeVal) {
+                alert('기상 시간을 설정해주세요!');
+                return;
+            }
+
+            document.getElementById('alarmStatus').innerText = `알람이 ${timeVal} 분으로 설정되었습니다.`;
+            document.getElementById('busSection').classList.remove('hidden');
+            
+            // 등록 완료 알림
+            alert('기상 시간이 설정되었습니다. 이제 버스 경로를 선택해주세요!');
+        }
+
+        // 2. 버스 경로 저장 함수
+        function saveBusRoute() {
+            const start = document.getElementById('startLocation').value;
+            const end = document.getElementById('endLocation').value;
+            const bus = document.getElementById('busSelect').value;
+
+            if (!start || !end || !bus) {
+                alert('출발지, 목적지, 버스 번호를 모두 입력 및 선택해 주세요!');
+                return;
+            }
+
+            alert('경로 저장이 완료되었습니다!\n설정한 기상 시간에 알람이 울리면 버스 시간이 표시됩니다.');
+            
+            // 알람 시간 감지 시작
+            startAlarmCheck();
+        }
+
+        // 알람 시간 실시간 체크
+        function startAlarmCheck() {
+            if (alarmTimer) clearInterval(alarmTimer);
+
+            alarmTimer = setInterval(() => {
+                const now = new Date();
+                const currentHours = String(now.getHours()).padStart(2, '0');
+                const currentMinutes = String(now.getMinutes()).padStart(2, '0');
+                const currentTimeStr = `${currentHours}:${currentMinutes}`;
+
+                const setTimeStr = document.getElementById('alarmTime').value;
+
+                // 알람 시간이 되었을 때
+                if (currentTimeStr === setTimeStr) {
+                    triggerAlarm();
+                    clearInterval(alarmTimer); // 알람 한 번 울린 후 타이머 중지
+                }
+            }, 1000);
+        }
+
+        // 3. 알람 울림 및 버스 도착 시간 표시
+        function triggerAlarm() {
+            // 소리 재생
+            playSound();
+
+            // 화면 디자인 변경 (알람 시각 효과)
+            const container = document.getElementById('alarmSection');
+            container.classList.add('alarm-active');
+
+            // 실시간 버스 정보 표시
+            document.getElementById('liveInfoSection').classList.remove('hidden');
+            
+            const start = document.getElementById('startLocation').value;
+            const end = document.getElementById('endLocation').value;
+            const bus = document.getElementById('busSelect').value;
+
+            document.getElementById('routeSummary').innerText = `[${start}] 에서 [${end}] 방향`;
+            document.getElementById('displayBusName').innerText = bus;
+            document.getElementById('displayRoute').innerText = `${start} ➔ ${end}`;
+
+            // 버스 도착 시간 시뮬레이션 시작
+            simulateBusArrival();
+        }
+
+        // 알람 끄기
+        function stopAlarm() {
+            stopSound();
+            document.getElementById('alarmSection').classList.remove('alarm-active');
+            alert('좋은 아침입니다! 서둘러 버스에 탑승하세요!');
+        }
+
+        // 버스 도착 예정 시간 랜더링 (시뮬레이션 데이터)
+        function simulateBusArrival() {
+            const times = ["2분 후 도착 [3개 전]", "5분 후 도착 [5개 전]", "9분 후 도착 [8개 전]"];
+            let idx = 0;
+            
+            document.getElementById('arrivalTime').innerText = times[idx];
+
+            // 5초마다 버스 위치 정보 갱신 (테스트용)
+            busUpdateTimer = setInterval(() => {
+                idx = (idx + 1) % times.length;
+                document.getElementById('arrivalTime').innerText = times[idx];
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
